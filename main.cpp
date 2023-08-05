@@ -3,7 +3,7 @@
 #include <sstream>
 using namespace std;
 
-#include "Graph.h"
+#include "graph.h"
 
 using namespace std;
 
