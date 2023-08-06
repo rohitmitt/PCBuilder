@@ -3,7 +3,7 @@
 #include <sstream>
 using namespace std;
 
-#include "Graph.h"
+#include "graph.h"
 
 using namespace std;
 
@@ -22,14 +22,14 @@ int main() {
     string memoryRAM;
 
 
-    // initialize user input
+    // initialize user input variable
     string option;
 
-    //"start" button
+    //terminal-based "start" button
     cout << "Press Enter to Begin";
     cin.ignore();
 
-    // Generating user data to conduct specific traversal
+    // questions prompted towards user to fill appropriate data for the query variables
 
     cout << "What is the resolution of your monitor?" << endl <<
          "[1] 1080p (1920 x 1080)" << endl <<
@@ -289,9 +289,10 @@ int main() {
     cout << "\n";
     cout << "Loading Program ..." << "\n" << endl;
 
-    // Initialize graph structure
+    // Initialize graph structure - this gets handled in QT front end
     Graph newGraph;
 
+    // I initialize the variables in the newGraph. This I will do in QT as well.
     newGraph.initializeQuery(pcSize,
                              gpuRAM,
                              resolution,
@@ -303,8 +304,10 @@ int main() {
                              driveSpace,
                              memoryRAM);
 
+    // debugging to see what variables were initialized
     newGraph.printQuery();
 
+    //this is loading data from the CSV files. Most likely why QT crashed whne I clicked "generatePC" button
     newGraph.loadData("data/Case.csv");
     newGraph.loadData("data/Cooler.csv");
     newGraph.loadData("data/CPU.csv");
@@ -314,9 +317,10 @@ int main() {
     newGraph.loadData("data/PSU.csv");
     newGraph.loadData("data/Storage.csv");
 
+    //constructs graph, this takes the longest time.
     newGraph.constructGraph();
 
-//    newGraph.checkAccuracy();
+    // We have started implementing this inside generatePC button clicked ()
     unordered_map<string, PCPart> currentBuild;
 
     currentBuild = newGraph.generateRandomBuild(newGraph.traverseBFS());
