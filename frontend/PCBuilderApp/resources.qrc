@@ -2,5 +2,6 @@
     <qresource prefix="/images">
         <file>assets/switchBFS.svg</file>
         <file>assets/switchDFS.svg</file>
+        <file>assets/placeholder.jpg</file>
     </qresource>
 </RCC>

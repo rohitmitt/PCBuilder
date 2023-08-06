@@ -235,8 +235,8 @@ bool Graph::queryCompatible(const PCPart& part) {
     else if (part.type == "psu") {
         if (!query["size"].empty()) {
             string query_size = query["size"];
-            if (query_size == "ITX" && part.attributes.at("size") == "ATX"
-                || query_size == "MicroATX" && part.attributes.at("size") == "ATX")
+            if ((query_size == "ITX" && part.attributes.at("size") == "ATX")
+                || (query_size == "MicroATX" && part.attributes.at("size") == "ATX"))
                 return false;
         }
     }

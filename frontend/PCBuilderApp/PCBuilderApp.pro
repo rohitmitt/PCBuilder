@@ -11,15 +11,18 @@ CONFIG += c++17
 # Add the appropriate include path based on the PCBuilder folder location
 
 SOURCES += \
-    ../../main.cpp \
+    ../../graph.cpp \
+    initdialog.cpp \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
-    ../../constants.h \
+    ../../graph.h \
+    initdialog.h \
     mainwindow.h
 
 FORMS += \
+    initdialog.ui \
     mainwindow.ui
 
 # Default rules for deployment.
@@ -29,3 +32,20 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 RESOURCES += \
     resources.qrc
+
+QT += concurrent
+QT += core gui network
+
+DISTFILES += \
+    assets/placeholder.jpg \
+    assets/switch.png \
+    assets/switchBFS.svg \
+    assets/switchDFS.svg
+
+LIBS += -L"C:/Program Files/OpenSSL-Win64/lib" \
+         "C:/Program Files/OpenSSL-Win64/lib/libssl.lib" \
+         "C:/Program Files/OpenSSL-Win64/lib/libcrypto.lib"
+INCLUDEPATH += "C:/Program Files/OpenSSL-Win64/include"
+
+
+
