@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <chrono>
 using namespace std;
 
 #include "graph.h"
@@ -20,7 +21,6 @@ int main() {
     string cpuSpeed;
     string cpuCores;
     string memoryRAM;
-
 
     // initialize user input variable
     string option;
@@ -76,16 +76,16 @@ int main() {
             cpuCores = "4";
             cpuGeneration = "current";
             driveType = "SATA";
-            driveSpace = "500";
+            driveSpace = "250";
             memoryRAM = "16";
             break;
         case 2:
             gpuRAM = "8";
             cpuSpeed = "3.0";
-            cpuCores = "6";
+            cpuCores = "8";
             cpuGeneration = "current";
             driveType = "SATA";
-            driveSpace = "1000";
+            driveSpace = "500";
             memoryRAM = "16";
             break;
         case 3:
@@ -94,7 +94,7 @@ int main() {
             cpuCores = "10";
             cpuGeneration = "latest";
             driveType = "NVME";
-            driveSpace = "2000";
+            driveSpace = "1000";
             memoryRAM = "32";
             break;
         case 4:
@@ -104,7 +104,7 @@ int main() {
             cpuCores = "2";
             cpuGeneration = "past";
             driveType = "HDD";
-            driveSpace = "1000";
+            driveSpace = "500";
             memoryRAM = "8";
             break;
     }
@@ -241,9 +241,9 @@ int main() {
 
     //pcSize gets updated to iterate through appropriate case, motherboard, and cooler parts
     cout << "What is your preferred PC Size?" << endl <<
-         "[1] Small" << endl <<
-         "[2] Medium" << endl <<
-         "[3] Large" << endl <<
+         "[1] Small (ITX)" << endl <<
+         "[2] Medium (Micro-ATX)" << endl <<
+         "[3] Large (ATX)" << endl <<
          "[4] No preference" << endl;
 
     do {
@@ -286,6 +286,7 @@ int main() {
             break;
     }
 
+
     cout << "\n";
     cout << "Loading Program ..." << "\n" << endl;
 
@@ -304,6 +305,9 @@ int main() {
                              driveSpace,
                              memoryRAM);
 
+//    string query = "";
+//    newGraph.initializeQuery(query, query, query, query, query, query, query,query, query, query);
+
     // debugging to see what variables were initialized
     newGraph.printQuery();
 
@@ -317,17 +321,44 @@ int main() {
     newGraph.loadData("data/PSU.csv");
     newGraph.loadData("data/Storage.csv");
 
+    cout << "Starting to construct Graph" << endl;
+    cout << endl;
+
+    auto start = std::chrono::high_resolution_clock::now();
     //constructs graph, this takes the longest time.
     newGraph.constructGraph();
+    auto stop = std::chrono::high_resolution_clock::now();
 
-    // We have started implementing this inside generatePC button clicked ()
-    unordered_map<string, PCPart> currentBuild;
+    // Calculate the difference between the start time and the end time
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
 
-    currentBuild = newGraph.generateRandomBuild(newGraph.traverseBFS());
+    newGraph.getSize();
+    std::cout << "Time taken by constructGraph(): " << duration.count() << " milliseconds" << std::endl;
 
-    for (auto& part : currentBuild) {
-        cout << part.first << " : " << part.second.name << endl;
-    }
+    cout << endl;
+
+    auto start2 = std::chrono::high_resolution_clock::now();
+
+    newGraph.traverseBFS();
+
+    auto stop2 = std::chrono::high_resolution_clock::now();
+
+    // Calculate the difference between the start time and the end time
+    auto duration2 = std::chrono::duration_cast<std::chrono::milliseconds>(stop2 - start2);
+
+    std::cout << "Time taken by traverseBFS(): " << duration2.count() << " milliseconds" << std::endl;
+
+    auto start3 = std::chrono::high_resolution_clock::now();
+
+    newGraph.generateRandomBuild(newGraph.getBuildVec());
+
+    auto stop3 = std::chrono::high_resolution_clock::now();
+    auto duration3 = std::chrono::duration_cast<std::chrono::milliseconds>(stop3 - start3);
+
+    std::cout << "Time taken by generateRandomBuild(): " << duration3.count() << " milliseconds" << std::endl;
+
+    for (auto& part : newGraph.getRandomBuild())
+        cout << part.first << ": " << part.second->name << endl;
 
     return 0;
 }

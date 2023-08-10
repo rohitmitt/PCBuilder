@@ -22,8 +22,8 @@ QT_BEGIN_MOC_NAMESPACE
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_MainWindow_t {
-    QByteArrayData data[15];
-    char stringdata0[248];
+    QByteArrayData data[14];
+    char stringdata0[233];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -35,25 +35,24 @@ static const qt_meta_stringdata_MainWindow_t qt_meta_stringdata_MainWindow = {
 QT_MOC_LITERAL(0, 0, 10), // "MainWindow"
 QT_MOC_LITERAL(1, 11, 22), // "imageSavedSuccessfully"
 QT_MOC_LITERAL(2, 34, 0), // ""
-QT_MOC_LITERAL(3, 35, 8), // "partType"
-QT_MOC_LITERAL(4, 44, 8), // "partName"
-QT_MOC_LITERAL(5, 53, 21), // "startingImageDownload"
-QT_MOC_LITERAL(6, 75, 26), // "on_traversalSwitch_clicked"
-QT_MOC_LITERAL(7, 102, 21), // "on_generatePC_clicked"
-QT_MOC_LITERAL(8, 124, 17), // "downloadPartImage"
-QT_MOC_LITERAL(9, 142, 8), // "imageUrl"
-QT_MOC_LITERAL(10, 151, 15), // "destinationPath"
-QT_MOC_LITERAL(11, 167, 14), // "downloadImages"
-QT_MOC_LITERAL(12, 182, 37), // "unordered_map<string,vector<P..."
-QT_MOC_LITERAL(13, 220, 5), // "build"
-QT_MOC_LITERAL(14, 226, 21) // "initializeDirectories"
+QT_MOC_LITERAL(3, 35, 6), // "PCPart"
+QT_MOC_LITERAL(4, 42, 4), // "part"
+QT_MOC_LITERAL(5, 47, 21), // "startingImageDownload"
+QT_MOC_LITERAL(6, 69, 26), // "on_traversalSwitch_clicked"
+QT_MOC_LITERAL(7, 96, 21), // "on_generatePC_clicked"
+QT_MOC_LITERAL(8, 118, 17), // "downloadPartImage"
+QT_MOC_LITERAL(9, 136, 15), // "destinationPath"
+QT_MOC_LITERAL(10, 152, 14), // "downloadImages"
+QT_MOC_LITERAL(11, 167, 37), // "unordered_map<string,vector<P..."
+QT_MOC_LITERAL(12, 205, 5), // "build"
+QT_MOC_LITERAL(13, 211, 21) // "initializeDirectories"
 
     },
     "MainWindow\0imageSavedSuccessfully\0\0"
-    "partType\0partName\0startingImageDownload\0"
+    "PCPart\0part\0startingImageDownload\0"
     "on_traversalSwitch_clicked\0"
     "on_generatePC_clicked\0downloadPartImage\0"
-    "imageUrl\0destinationPath\0downloadImages\0"
+    "destinationPath\0downloadImages\0"
     "unordered_map<string,vector<PCPart> >\0"
     "build\0initializeDirectories"
 };
@@ -73,25 +72,25 @@ static const uint qt_meta_data_MainWindow[] = {
        2,       // signalCount
 
  // signals: name, argc, parameters, tag, flags
-       1,    2,   49,    2, 0x06 /* Public */,
-       5,    0,   54,    2, 0x06 /* Public */,
+       1,    1,   49,    2, 0x06 /* Public */,
+       5,    0,   52,    2, 0x06 /* Public */,
 
  // slots: name, argc, parameters, tag, flags
-       6,    0,   55,    2, 0x08 /* Private */,
-       7,    0,   56,    2, 0x08 /* Private */,
-       8,    4,   57,    2, 0x08 /* Private */,
-      11,    1,   66,    2, 0x08 /* Private */,
-      14,    0,   69,    2, 0x08 /* Private */,
+       6,    0,   53,    2, 0x08 /* Private */,
+       7,    0,   54,    2, 0x08 /* Private */,
+       8,    2,   55,    2, 0x08 /* Private */,
+      10,    1,   60,    2, 0x08 /* Private */,
+      13,    0,   63,    2, 0x08 /* Private */,
 
  // signals: parameters
-    QMetaType::Void, QMetaType::QString, QMetaType::QString,    3,    4,
+    QMetaType::Void, 0x80000000 | 3,    4,
     QMetaType::Void,
 
  // slots: parameters
     QMetaType::Void,
     QMetaType::Void,
-    QMetaType::Void, QMetaType::QString, QMetaType::QString, QMetaType::QString, QMetaType::QString,    9,   10,    3,    4,
-    QMetaType::Void, 0x80000000 | 12,   13,
+    QMetaType::Void, 0x80000000 | 3, QMetaType::QString,    4,    9,
+    QMetaType::Void, 0x80000000 | 11,   12,
     QMetaType::Void,
 
        0        // eod
@@ -103,11 +102,11 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         auto *_t = static_cast<MainWindow *>(_o);
         (void)_t;
         switch (_id) {
-        case 0: _t->imageSavedSuccessfully((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2]))); break;
+        case 0: _t->imageSavedSuccessfully((*reinterpret_cast< const PCPart(*)>(_a[1]))); break;
         case 1: _t->startingImageDownload(); break;
         case 2: _t->on_traversalSwitch_clicked(); break;
         case 3: _t->on_generatePC_clicked(); break;
-        case 4: _t->downloadPartImage((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2])),(*reinterpret_cast< const QString(*)>(_a[3])),(*reinterpret_cast< const QString(*)>(_a[4]))); break;
+        case 4: _t->downloadPartImage((*reinterpret_cast< const PCPart(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2]))); break;
         case 5: _t->downloadImages((*reinterpret_cast< const unordered_map<string,vector<PCPart> >(*)>(_a[1]))); break;
         case 6: _t->initializeDirectories(); break;
         default: ;
@@ -115,7 +114,7 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
     } else if (_c == QMetaObject::IndexOfMethod) {
         int *result = reinterpret_cast<int *>(_a[0]);
         {
-            using _t = void (MainWindow::*)(const QString & , const QString & );
+            using _t = void (MainWindow::*)(const PCPart & );
             if (*reinterpret_cast<_t *>(_a[1]) == static_cast<_t>(&MainWindow::imageSavedSuccessfully)) {
                 *result = 0;
                 return;
@@ -172,9 +171,9 @@ int MainWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
 }
 
 // SIGNAL 0
-void MainWindow::imageSavedSuccessfully(const QString & _t1, const QString & _t2)
+void MainWindow::imageSavedSuccessfully(const PCPart & _t1)
 {
-    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))), const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t2))) };
+    void *_a[] = { nullptr, const_cast<void*>(reinterpret_cast<const void*>(std::addressof(_t1))) };
     QMetaObject::activate(this, &staticMetaObject, 0, _a);
 }
 

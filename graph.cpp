@@ -3,18 +3,18 @@
 #include <sstream>
 #include <queue>
 #include <stack>
-#include <random>
+#include <cmath>
+#include <unordered_set>
 
 #include "graph.h"
 
 // PARSER FUNCTION //
-vector<PCPart> Graph::parseCSV(const string& filename) {
-    vector<PCPart> parts;
+void Graph::parseCSV(const string& filename) {
     ifstream file(filename);
 
     if (!file) {
         cerr << "Unable to open file: " << filename << endl;
-        return parts; // Returns an empty vector
+        return; // Returns void
     }
 
     string line;
@@ -29,19 +29,29 @@ vector<PCPart> Graph::parseCSV(const string& filename) {
         headers.push_back(header);
     }
 
+//    int count = 0;
     while (getline(file, line)) {
+//        count++;
+//        if (count >= 3)
+//            break;
+
         istringstream ss(line);
         string field;
-        PCPart part;
+        auto part = std::make_shared<PCPart>();
 
         // Grab first four common attributes for each part
         for (int i = 0; i < 4; i++) {
             getline(ss, field, ',');
             switch (i) {
-                case 0: part.type = field; break;
-                case 1: part.name = field; break;
-                case 2: part.image = field; break;
-                case 3: part.url = field; break;
+                case 0: part->type = field; break;
+                case 1: part->name = field; break;
+                case 2: part->image = field; break;
+                case 3: part->url = field; break;
+                default:
+                    // You can either do nothing here
+                    break;
+                    // Or perhaps throw an exception or add a logging statement to report an unexpected value
+                     throw std::runtime_error("Unexpected value in switch");
             }
         }
 
@@ -49,136 +59,107 @@ vector<PCPart> Graph::parseCSV(const string& filename) {
         int headerIndex = 4; // Start from the fifth column (0-based index)
         while (getline(ss, field, ',')) {
             if (headerIndex < headers.size()) {
-                part.attributes[headers[headerIndex]] = field;
+                part->attributes[headers[headerIndex]] = field;
                 headerIndex++;
             }
         }
 
         parts.push_back(part);
+        partIndex[part->name] = parts.size() - 1; // since index is 0-based and we just added the part
     }
 
-    return parts;
+        // Resize the adjacency matrix
+        adjacencyMatrix.resize(parts.size());
+        for (auto& row : adjacencyMatrix) {
+            row.resize(parts.size(), false);
+        }
+
+//    cout << "Total parts added from " << filename << ": " << parts.size() << endl;
+
 }
 
 // DATA SETTER(s) //
 void Graph::loadData(const string& filename) {
-    vector<PCPart> loadedParts = parseCSV(filename);
+    parseCSV(filename);
 
-    for (const PCPart& part : loadedParts) {
-        addPart(part);
+    unordered_map<string, vector<shared_ptr<PCPart>>*> typeToVectorMap = {
+            {"case", &caseCompatibleVector},
+            {"cooler", &coolerCompatibleVector},
+            {"cpu", &cpuCompatibleVector},
+            {"gpu", &gpuCompatibleVector},
+            {"memory", &memoryCompatibleVector},
+            {"motherboard", &motherboardCompatibleVector},
+            {"psu", &psuCompatibleVector},
+            {"storage", &storageCompatibleVector},
+    };
 
-        if (part.type == "case") {
-            caseVector.push_back(part);
+    for (const shared_ptr<PCPart>& part : parts) {
+        if (typeToVectorMap.find(part->type) != typeToVectorMap.end()) {
+            if (queryCompatible(part)) {
+                typeToVectorMap[part->type]->push_back(part);
+            }
         }
-
-        else if (part.type == "cooler") {
-            coolerVector.push_back(part);
-        }
-
-        else if (part.type == "cpu") {
-            cpuVector.push_back(part);
-        }
-
-        else if (part.type == "gpu") {
-            gpuVector.push_back(part);
-        }
-
-        else if (part.type == "memory") {
-            memoryVector.push_back(part);
-        }
-
-        else if (part.type == "motherboard") {
-            motherboardVector.push_back(part);
-        }
-
-        else if (part.type == "psu") {
-            psuVector.push_back(part);
-        }
-
-        else if (part.type == "storage") {
-            storageVector.push_back(part);
-        }
-
     }
 }
 
-void Graph::addPart(const PCPart &part) {
-    // Add part to map of part indices
-    partIndex[part.name] = parts.size();
 
-    // Add part to list of parts
-    parts.push_back(part);
+void Graph::addEdge(const shared_ptr<PCPart>& part1Ptr, const shared_ptr<PCPart>& part2Ptr) {
+    const PCPart& part1 = *part1Ptr;
+    const PCPart& part2 = *part2Ptr;
 
-    // Resize the adjacency matrix
-    adjacencyMatrix.resize(parts.size());
-    for (auto& row : adjacencyMatrix) {
-        row.resize(parts.size(), false);
-    }
-}
-
-void Graph::addEdge(const PCPart& part1, const PCPart& part2) {
     int index1 = partIndex[part1.name];
     int index2 = partIndex[part2.name];
 
-    // Add edge to adjacency matrix
     adjacencyMatrix[index1][index2] = true;
     adjacencyMatrix[index2][index1] = true;
+    numEdgesAdded++;
 }
 
 void Graph::constructGraph() {
-//     Initialize a map of important relationships between each part
-    unordered_map<string, vector<string>> relationships = {
-            {"cpu",         {"motherboard", "memory"}},
-            {"memory",      {"cpu", "motherboard"}},
-            {"motherboard", {"cpu", "memory", "case"}},
-            {"storage",     {"case"}},
-            {"case",        {"motherboard", "storage", "cooler", "psu"}},
-            {"cooler",      {"case"}},
-            {"psu",         {"gpu", "case"}},
-            {"gpu",         {"psu"}}
-    };
+    // Define the relationship map here
 
     // Initialize a hash table to hold pointers to vectors of PCParts for each type
-    unordered_map<string, vector<PCPart>*> partMap;
-    partMap["cpu"] = &cpuVector;
-    partMap["gpu"] = &gpuVector;
-    partMap["memory"] = &memoryVector;
-    partMap["motherboard"] = &motherboardVector;
-    partMap["storage"] = &storageVector;
-    partMap["case"] = &caseVector;
-    partMap["cooler"] = &coolerVector;
-    partMap["psu"] = &psuVector;
+    unordered_map<string, vector<shared_ptr<PCPart>> *> partMap;
+    partMap["case"] = &caseCompatibleVector;
+    partMap["motherboard"] = &motherboardCompatibleVector;
+    partMap["cpu"] = &cpuCompatibleVector;
+    partMap["gpu"] = &gpuCompatibleVector;
+    partMap["memory"] = &memoryCompatibleVector;
+    partMap["storage"] = &storageCompatibleVector;
+    partMap["cooler"] = &coolerCompatibleVector;
+    partMap["psu"] = &psuCompatibleVector;
 
-    // Construct the graph by iterating over each partType in the part map O(1)
-    for (const auto& currentType: partMap) {
+    std::vector<std::string> orderOfPartType = {
+            "case",
+            "motherboard",
+            "cpu",
+            "memory",
+            "gpu",
+            "psu",
+            "cooler",
+            "storage"
+    };
 
-        // iterate over each part within associated part type Vector O(V) where V is the vertex
-        for (const auto& currentPart : *currentType.second) {
+    // Construct the graph by iterating over each partType in the ordered list
+    for (const string& currentType: orderOfPartType) {
+        // Get the vector of parts associated with the current type
+        auto currentTypeVector = partMap[currentType];
 
+        // Iterate over each part within associated part type Vector O(V) where V is the vertex
+        for (const auto &currentPart: *currentTypeVector) {
             // Iterate over the types of parts that are connected to the current part type O(1)
-            for (const auto& relatedType: relationships[currentType.first]) {
-
+            for (const auto &relatedType: relationships[currentType]) {
                 // Iterate over the parts of the related type O(E) where E is the # of Edges (worst case E = V * (V-1) because no self loops)
-                for (PCPart &currentRelatedPart: *(partMap[relatedType])) {
+                for (const auto &currentRelatedPart: *(partMap[relatedType])) {
 
-                    if (queryCompatible(currentPart) && queryCompatible(currentRelatedPart)) {
-                        // Check compatibility for gpu and psu
-                        if ((currentType.first == "gpu" && relatedType == "psu")
-                            || (currentType.first == "psu" && relatedType == "gpu")) {
-                            if (!arePartsCompatible(currentPart, currentRelatedPart)) {
-                                break;
-                            }
-                        }
-                        // Check compatibility for cpu and motherboard
-                        if ((currentType.first == "cpu" && relatedType == "motherboard")
-                            || (currentType.first == "motherboard" && relatedType == "cpu")) {
-                            if (!arePartsCompatible(currentPart, currentRelatedPart)) {
-                                break;
-                            }
-                        }
-                        //if everything passes, add an edge between the parts
+                    // Skip if already visited
+                    if (adjacencyMatrix[partIndex[currentPart->name]][partIndex[currentRelatedPart->name]])
+                        continue;
+
+                    // Check compatibility
+                    if (arePartsCompatible(currentPart, currentRelatedPart))
+                        // If everything passes, add an edge between the parts
                         addEdge(currentPart, currentRelatedPart);
-                    }
                 }
             }
         }
@@ -187,7 +168,9 @@ void Graph::constructGraph() {
 
 
 // DATA ANALYSIS //
-bool Graph::queryCompatible(const PCPart& part) {
+// ADD MODULARITY
+bool Graph::queryCompatible(const shared_ptr<PCPart>& partPtr) {
+    const PCPart& part = *partPtr;
 
     // Motherboard Part
     if (part.type == "motherboard") {
@@ -222,7 +205,7 @@ bool Graph::queryCompatible(const PCPart& part) {
         }
     }
 
-    // Case Part
+        // Case Part
     else if (part.type == "case") {
         if (!query["size"].empty()) {
             string query_size = query["size"];
@@ -231,7 +214,7 @@ bool Graph::queryCompatible(const PCPart& part) {
         }
     }
 
-    // PSU Part
+        // PSU Part
     else if (part.type == "psu") {
         if (!query["size"].empty()) {
             string query_size = query["size"];
@@ -241,7 +224,7 @@ bool Graph::queryCompatible(const PCPart& part) {
         }
     }
 
-    // Cooler Part
+        // Cooler Part
     else if (part.type == "cooler") {
         if (!query["size"].empty()) {
             string query_size = query["size"];
@@ -252,12 +235,13 @@ bool Graph::queryCompatible(const PCPart& part) {
             string query_generation = query["generation"];
             string part_type = part.attributes.at("type");
             if ((query_generation == "past" && part_type == "liquid") ||
+                (query_generation == "current" && part_type == "liquid") ||
                 (query_generation == "latest" && part_type != "liquid"))
                 return false;
         }
     }
 
-    // Storage Part
+        // Storage Part
     else if (part.type == "storage") {
         if (!query["size"].empty()) {
             string query_size = query["size"];
@@ -277,14 +261,18 @@ bool Graph::queryCompatible(const PCPart& part) {
             int part_space = stoi(part.attributes.at("space"));
             if (part_space < query_space)
                 return false;
+            if (part_space > query_space*2)
+                return false;
         }
     }
 
-    // GPU Part
+        // GPU Part
     else if (part.type == "gpu") {
         if (!query["VRAM"].empty()) {
             string query_VRAM = query["VRAM"];
             if (stoi(part.attributes.at("VRAM")) < stoi(query_VRAM))
+                return false;
+            if (stoi(part.attributes.at("VRAM")) > stoi(query_VRAM)*1.5)
                 return false;
         }
         if (!query["resolution"].empty()) {
@@ -299,14 +287,13 @@ bool Graph::queryCompatible(const PCPart& part) {
         }
     }
 
-    // CPU Part
+        // CPU Part
     else if (part.type == "cpu") {
         if (!query["brand"].empty()) {
             string query_brand = query["brand"];
             if (part.attributes.at("brand") != query_brand)
                 return false;
         }
-
         if (!query["generation"].empty()) {
             string query_generation = query["generation"];
             if (query_generation == "past") {
@@ -330,17 +317,21 @@ bool Graph::queryCompatible(const PCPart& part) {
             string query_speed = query["speed"];
             if (stof(part.attributes.at("speed")) < stof(query_speed))
                 return false;
+            if (stof(part.attributes.at("speed")) > stof(query_speed) * 1.2)
+                return false;
         }
         if (!query["coreCount"].empty()) {
             string query_coreCount = query["coreCount"];
             if (stoi(part.attributes.at("coreCount")) < stoi(query_coreCount))
                 return false;
+            if (stoi(part.attributes.at("coreCount")) > stoi(query_coreCount)*1.5)
+                return false;
         }
 
-        return true; 
+        return true;
     }
 
-    // Memory Part
+        // Memory Part
     else if (part.type == "memory") {
         if (!query["generation"].empty()) {
             string query_generation = query["generation"];
@@ -363,168 +354,205 @@ bool Graph::queryCompatible(const PCPart& part) {
             int part_memory = stoi(part.attributes.at("size"));
             if (part_memory < query_memory)
                 return false;
+            if (part_memory >= query_memory * 2)
+                return false;
         }
     }
     return true;
 }
 
-bool Graph::arePartsCompatible(const PCPart& part1, const PCPart& part2) {
+
+bool Graph::arePartsCompatible(const shared_ptr<PCPart>& part1Ptr, const shared_ptr<PCPart>& part2Ptr) {
+    const PCPart& part1 = *part1Ptr;
+    const PCPart& part2 = *part2Ptr;
+
+    // GPU and PSU COMPATIBILITY
     if ((part1.type == "gpu" && part2.type == "psu") || (part1.type == "psu" && part2.type == "gpu")) {
         const PCPart& gpuPart = part1.type == "gpu" ? part1 : part2;
         const PCPart& psuPart = part1.type == "psu" ? part1 : part2;
 
         //calculate minimum power required to run GPU
-        int minPower = stoi(gpuPart.attributes.at("power")) * 2 + 100;
+        int minPower = static_cast<int>(-536.9 + 522.65 * log10(static_cast<double>(stoi(gpuPart.attributes.at("power")))));
+//        int maxPower = static_cast<int>(1.1 * minPower);  // 150% of minPower
+        int psuPower = stoi(psuPart.attributes.at("power"));
 
-        return stoi(psuPart.attributes.at("power")) >= minPower;
+        return psuPower >= minPower;
     }
 
+    // CPU AND MOTHERBOARD
     if ((part1.type == "cpu" && part2.type == "motherboard") || (part1.type == "motherboard" && part2.type == "cpu")) {
         const PCPart& cpuPart = part1.type == "cpu" ? part1 : part2;
         const PCPart& moboPart = part1.type == "motherboard" ? part1 : part2;
 
-        if (cpuPart.attributes.at("socket") == moboPart.attributes.at("socket"))
-            return true;
+        if (cpuPart.attributes.at("socket") == moboPart.attributes.at("socket")) {
+            // Ensure Intel CPUs are only compatible with Intel motherboards and vice-versa for AMD
+            if ((cpuPart.attributes.at("brand") == "Intel" && moboPart.attributes.at("brand") == "Intel") ||
+                (cpuPart.attributes.at("brand") == "AMD" && moboPart.attributes.at("brand") == "AMD")) {
+                return true;
+            }
+        }
+        return false;
     }
 
-    return false;
+    if (query["size"] == "") {
+        // STORAGE AND CASE
+        if ((part1.type == "storage" && part2.type == "case") || (part1.type == "case" && part2.type == "storage")) {
+            const PCPart& storagePart = part1.type == "storage" ? part1 : part2;
+            const PCPart& casePart = part1.type == "case" ? part1 : part2;
+
+            if (storagePart.attributes.at("type") == "HDD" && casePart.attributes.at("size") == "ITX") {
+                return false;
+            }
+        }
+
+        // COOLER AND CASE
+        if ((part1.type == "cooler" && part2.type == "case") || (part1.type == "case" && part2.type == "cooler")) {
+            const PCPart& coolerPart = part1.type == "cooler" ? part1 : part2;
+            const PCPart& casePart = part1.type == "case" ? part1 : part2;
+
+            if (coolerPart.attributes.at("type") == "liquid" && casePart.attributes.at("size") == "ITX") {
+                return false;
+            }
+        }
+
+        // PSU AND CASE
+        if ((part1.type == "psu" && part2.type == "case") || (part1.type == "case" && part2.type == "psu")) {
+            const PCPart& psuPart = part1.type == "psu" ? part1 : part2;
+            const PCPart& casePart = part1.type == "case" ? part1 : part2;
+
+            if ((casePart.attributes.at("size") == "ITX" || casePart.attributes.at("size") == "MicroATX") && psuPart.attributes.at("size") == "ATX") {
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
 
 
 // TRAVERSAL ALGORITHMS //
-unordered_map<string, vector<PCPart>> Graph::traverseBFS() {
-    unordered_map<string, vector<PCPart>> build;
-
-    vector<PCPart> compatibleGPUs;
-
-    // Gather all compatible GPUs
-    for (const PCPart& gpu : gpuVector) {
-        if (queryCompatible(gpu)) {
-            compatibleGPUs.push_back(gpu);
-        }
-    }
+void Graph::traverseBFS() {
+    potentialBuildPartsSet.clear();
+    potentialBuildPartsVec.clear();
 
     // select a random GPU as the source node, add it to the randomBuild mapping for final results.
-    PCPart startingPart = selectRandomPart(compatibleGPUs);
-    build[startingPart.type].push_back(startingPart);
-    randomBuild[startingPart.type] = startingPart;
+    shared_ptr<PCPart> startingPart = selectRandomPart(motherboardCompatibleVector);
 
-    queue<PCPart> q;
+    // Insert starting part into both set and vector
+    potentialBuildPartsSet[startingPart->type].insert(startingPart);
+    potentialBuildPartsVec[startingPart->type].push_back(startingPart);
+
+    randomBuild[startingPart->type] = startingPart;
+
+    queue<shared_ptr<PCPart>> q;
     q.push(startingPart);
+
     while (!q.empty()) {
-        PCPart currentPart = q.front();
+        auto currentPart = q.front();
         q.pop();
 
         // Visit all adjacent parts and not already in the build parts
-        int index = partIndex[currentPart.name];
+        int index = partIndex[currentPart->name];
         for (int i = 0; i < adjacencyMatrix[index].size(); i++) {
-            if (adjacencyMatrix[index][i]) {  // If there's an compatibility to the ith part
-                const PCPart& adjacentPart = parts[i];
-                bool isFound = false;
-                for (auto& part : build[adjacentPart.type]) {  // And it's not already in the build
-                    if (part.name == adjacentPart.name) {
-                        isFound = true;
-                        break;
-                    }
-                }
-                //if compatible part is found that doesn't exist in the vector of parts (hasn't been visited)
-                //add it to the vector of parts, and push the part onto the queue
-                if (!isFound) {
-                    build[adjacentPart.type].push_back(adjacentPart);
+            if (adjacencyMatrix[index][i]) {  // If there's a compatibility to the ith part
+                const auto &adjacentPart = parts[i];
+
+                // Check for existence in the set
+                if (potentialBuildPartsSet[adjacentPart->type].find(adjacentPart) ==
+                    potentialBuildPartsSet[adjacentPart->type].end()) {
+
+                    potentialBuildPartsSet[adjacentPart->type].insert(adjacentPart);
+                    potentialBuildPartsVec[adjacentPart->type].push_back(adjacentPart);
+
                     q.push(adjacentPart);
                 }
             }
         }
     }
-
-    return build;
 }
 
-unordered_map<string, vector<PCPart>> Graph::traverseDFS() {
-    unordered_map<string, vector<PCPart>> build;
-
-    vector<PCPart> compatibleGPUs;
-
-    // Gather all compatible GPUs
-    for (const PCPart& gpu : gpuVector) {
-        if (queryCompatible(gpu)) {
-            compatibleGPUs.push_back(gpu);
-        }
-    }
+void Graph::traverseDFS() {
+    potentialBuildPartsSet.clear();
+    potentialBuildPartsVec.clear();
 
     // select a random GPU as the source node, add it to the randomBuild mapping for final results.
-    PCPart startingPart = selectRandomPart(compatibleGPUs);
-    build[startingPart.type].push_back(startingPart);
-    randomBuild[startingPart.type] = startingPart;
+    shared_ptr<PCPart> startingPart = selectRandomPart(gpuCompatibleVector);
+
+    // Insert starting part into both set and vector=
+    potentialBuildPartsSet[startingPart->type].insert(startingPart);
+    potentialBuildPartsVec[startingPart->type].push_back(startingPart);
+
+    randomBuild[startingPart->type] = startingPart;
 
     stack<PCPart> s;
-    s.push(startingPart);
+    s.push(*startingPart);
+    unordered_set<string> visitedParts;
+
     while (!s.empty()) {
         PCPart currentPart = s.top();
         s.pop();
 
-        // Visit all adjacent and not already in the build parts
+        if (visitedParts.find(currentPart.name) != visitedParts.end()) {
+            continue;  // Skip if already visited
+        }
+
+        visitedParts.insert(currentPart.name);  // Mark as visited
+
+        // Visit all adjacent parts and not already in the build parts
         int index = partIndex[currentPart.name];
         for (int i = 0; i < adjacencyMatrix[index].size(); i++) {
-            if (adjacencyMatrix[index][i]) {  // If there's an edge to the ith part
-                const PCPart& adjacentPart = parts[i];
-                bool isFound = false;
-                for (auto& part : build[adjacentPart.type]) {  // And it's not already in the build
-                    if (part.name == adjacentPart.name) {
-                        isFound = true;
-                        break;
-                    }
-                }
-                //if compatible part is found that doesn't exist in the vector of parts (hasn't been visited)
-                //add it to the vector of parts, and push the part onto the stack
-                if (!isFound) {
-                    build[adjacentPart.type].push_back(adjacentPart);
-                    s.push(adjacentPart);
+            if (adjacencyMatrix[index][i]) {  // If there's a compatibility to the ith part
+                const auto &adjacentPart = parts[i];
+
+                // Check for existence in the set
+                if (potentialBuildPartsSet[adjacentPart->type].find(adjacentPart) ==
+                    potentialBuildPartsSet[adjacentPart->type].end()) {
+                    // Insert into both set and vector
+                    potentialBuildPartsSet[adjacentPart->type].insert(adjacentPart);
+                    potentialBuildPartsVec[adjacentPart->type].push_back(adjacentPart);
+                    s.push(*adjacentPart);
                 }
             }
         }
     }
-
-    return build;
 }
 
-
 // HELPER FUNCTIONS //
-PCPart Graph::selectRandomPart(vector<PCPart> compatiblePartVector) {
+const shared_ptr<PCPart>& Graph::selectRandomPart(const vector<shared_ptr<PCPart>>& compatiblePartVector) {
     // Check if any compatible CPUs were found
     if (compatiblePartVector.empty()) {
         throw runtime_error("No compatible parts found");
     }
 
     // Select a random compatible GPU
-    std::random_device rd;  // Random number generator
-    std::mt19937 rng(rd());  // Mersenne Twister random number generator
-    std::uniform_int_distribution<int> uni(0, compatiblePartVector.size() - 1);  // Uniform distribution between 0 and size-1
-
+    std::uniform_int_distribution<int> uni(0, compatiblePartVector.size() - 1);
     int randomIndex = uni(rng);
 
     return compatiblePartVector[randomIndex];
 }
 
-unordered_map<string, PCPart> Graph::generateRandomBuild
-(const unordered_map<string, vector<PCPart>>& traversalResult) {
-    // For each part type, select a random part
-    for (const auto& partType : traversalResult) {
-        randomBuild[partType.first] = selectRandomPart(partType.second);
-    }
-    return randomBuild;
+void Graph::generateRandomBuild(const unordered_map<string, vector<shared_ptr<PCPart>>>& traversalResult) {
+    randomBuild.clear();
+
+    do {
+        // For each part type, select a random part
+        for (const auto& partType : traversalResult) {
+            randomBuild[partType.first] = selectRandomPart(partType.second);
+        }
+    } while (!areAllPartsCompatible(randomBuild));  // Retry until a compatible build is found
 }
 
-void Graph::initializeQuery(string& size,
-                            string& gpuRAM,
-                            string& resolution,
-                            string& brand,
-                            string& speed,
-                            string& coreCount,
-                            string& generation,
-                            string& driveType,
-                            string& driveSpace,
-                            string& memoryRAM) {
+
+void Graph::initializeQuery(string size,
+                            string gpuRAM,
+                            string resolution,
+                            string brand,
+                            string speed,
+                            string coreCount,
+                            string generation,
+                            string driveType,
+                            string driveSpace,
+                            string memoryRAM) {
     // Motherboard, Case, PSU, Cooler, Storage
     query["size"] = size;
 

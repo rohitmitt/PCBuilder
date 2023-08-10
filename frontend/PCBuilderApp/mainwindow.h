@@ -21,9 +21,6 @@ public:
         this->newGraph = graph;
     }
     QString buildPath;
-    QString getLastDownloadedPartType() const;
-
-    QString getLastDownloadedPartName() const;
 
     unordered_map<string, PCPart>& getRandomBuild() {
         return randomBuild;
@@ -33,20 +30,20 @@ public:
 private:
     Ui::MainWindow *ui;
     Graph newGraph; //initialize graph object in QT
-    bool useDFS;
-    QString lastDownloadedPartType;
-    QString lastDownloadedPartName;
+    bool useDFS; // check traversal type
     unordered_map<string, PCPart> randomBuild;
+    int imageDownloadCounter = 0;
+
 
 private slots:
     void on_traversalSwitch_clicked();
     void on_generatePC_clicked();
-    void downloadPartImage(const QString& imageUrl, const QString& destinationPath, const QString& partType, const QString& partName);
+    void downloadPartImage(const PCPart& part, const QString& destinationPath);
     void downloadImages(const unordered_map<string, vector<PCPart>>& build);
     void initializeDirectories();
 
 signals:
-    void imageSavedSuccessfully(const QString& partType, const QString& partName);
+    void imageSavedSuccessfully(const PCPart& part);
     void startingImageDownload();
 
 };

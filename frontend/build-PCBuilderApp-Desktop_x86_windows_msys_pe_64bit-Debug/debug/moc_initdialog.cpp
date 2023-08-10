@@ -23,7 +23,7 @@ QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_InitDialog_t {
     QByteArrayData data[11];
-    char stringdata0[168];
+    char stringdata0[166];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -38,18 +38,18 @@ QT_MOC_LITERAL(2, 32, 0), // ""
 QT_MOC_LITERAL(3, 33, 19), // "onNextButtonClicked"
 QT_MOC_LITERAL(4, 53, 17), // "updateProgressBar"
 QT_MOC_LITERAL(5, 71, 18), // "displayLoadingPage"
-QT_MOC_LITERAL(6, 90, 18), // "displayRandomBuild"
-QT_MOC_LITERAL(7, 109, 28), // "handleImageSavedSuccessfully"
-QT_MOC_LITERAL(8, 138, 8), // "partType"
-QT_MOC_LITERAL(9, 147, 8), // "partName"
-QT_MOC_LITERAL(10, 156, 11) // "displayPart"
+QT_MOC_LITERAL(6, 90, 22), // "displayRandomBuildPage"
+QT_MOC_LITERAL(7, 113, 28), // "handleImageSavedSuccessfully"
+QT_MOC_LITERAL(8, 142, 6), // "PCPart"
+QT_MOC_LITERAL(9, 149, 4), // "part"
+QT_MOC_LITERAL(10, 154, 11) // "displayPart"
 
     },
     "InitDialog\0onStartButtonClicked\0\0"
     "onNextButtonClicked\0updateProgressBar\0"
-    "displayLoadingPage\0displayRandomBuild\0"
-    "handleImageSavedSuccessfully\0partType\0"
-    "partName\0displayPart"
+    "displayLoadingPage\0displayRandomBuildPage\0"
+    "handleImageSavedSuccessfully\0PCPart\0"
+    "part\0displayPart"
 };
 #undef QT_MOC_LITERAL
 
@@ -72,8 +72,8 @@ static const uint qt_meta_data_InitDialog[] = {
        4,    0,   51,    2, 0x08 /* Private */,
        5,    0,   52,    2, 0x08 /* Private */,
        6,    0,   53,    2, 0x08 /* Private */,
-       7,    2,   54,    2, 0x08 /* Private */,
-      10,    2,   59,    2, 0x0a /* Public */,
+       7,    1,   54,    2, 0x08 /* Private */,
+      10,    1,   57,    2, 0x0a /* Public */,
 
  // slots: parameters
     QMetaType::Void,
@@ -81,8 +81,8 @@ static const uint qt_meta_data_InitDialog[] = {
     QMetaType::Void,
     QMetaType::Void,
     QMetaType::Void,
-    QMetaType::Void, QMetaType::QString, QMetaType::QString,    8,    9,
-    QMetaType::Void, QMetaType::QString, QMetaType::QString,    8,    9,
+    QMetaType::Void, 0x80000000 | 8,    9,
+    QMetaType::Void, 0x80000000 | 8,    9,
 
        0        // eod
 };
@@ -97,9 +97,9 @@ void InitDialog::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 1: _t->onNextButtonClicked(); break;
         case 2: _t->updateProgressBar(); break;
         case 3: _t->displayLoadingPage(); break;
-        case 4: _t->displayRandomBuild(); break;
-        case 5: _t->handleImageSavedSuccessfully((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2]))); break;
-        case 6: _t->displayPart((*reinterpret_cast< const QString(*)>(_a[1])),(*reinterpret_cast< const QString(*)>(_a[2]))); break;
+        case 4: _t->displayRandomBuildPage(); break;
+        case 5: _t->handleImageSavedSuccessfully((*reinterpret_cast< const PCPart(*)>(_a[1]))); break;
+        case 6: _t->displayPart((*reinterpret_cast< const PCPart(*)>(_a[1]))); break;
         default: ;
         }
     }

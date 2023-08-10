@@ -41,7 +41,7 @@ public:
     void loadingData();
     void onGraphConstructionFinished();
     void displayNextPart();
-    void displayRandomBuildPart(const QString& partType, const PCPart& part);
+    void displayRandomBuildPart(const PCPart& part);
     QString splitPartName(const QString &partName);
 
 
@@ -50,7 +50,7 @@ private:
     Graph newGraph;
     MainWindow *mainWindow;
 
-    QMap<QString, QLabel*> partImageLabels; // This seems to be missing from the info you've given but is used in the code
+    QMap<QString, QLabel*> partImageLabels;
     QMap<QString, QVector<QLabel*>> partAttributeLabels;
 
 
@@ -77,7 +77,7 @@ private:
     QProgressBar* progressBar;
     QTimer *timer;
 
-    QQueue<QPair<QString, QString>> partsQueue;
+    QQueue<const PCPart*> partsQueue;
     QTimer displayTimer;
 
     unordered_set<string> foundType;
@@ -88,11 +88,11 @@ private slots:
     void onNextButtonClicked(); // Slot for next button clicked
     void updateProgressBar();
     void displayLoadingPage();
-    void displayRandomBuild();
-    void handleImageSavedSuccessfully(const QString& partType, const QString& partName);
+    void displayRandomBuildPage();
+    void handleImageSavedSuccessfully(const PCPart& part);
 
 public slots:
-    void displayPart(const QString& partType, const QString& partName);
+    void displayPart(const PCPart& part);
 };
 
 #endif // INITDIALOG_H

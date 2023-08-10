@@ -493,21 +493,30 @@ void InitDialog::loadingData() {
     newGraph.loadData("../../cmake-build-debug/data/Storage.csv");
 }
 
-void InitDialog::displayPart(const QString& partType, const QString& partName)
+void InitDialog::displayPart(const PCPart& part)
 {
     unordered_map<string, PCPart>& randomBuild = mainWindow->getRandomBuild();
 
-    if (randomBuild.find(partType.toStdString()) != randomBuild.end() &&
-        randomBuild[partType.toStdString()].name == partName.toStdString()) {
-        displayRandomBuildPart(partType, randomBuild[partType.toStdString()]);
-        foundType.insert(partType.toStdString());
+    if (randomBuild.find(part.type) != randomBuild.end() &&
+        randomBuild[part.type] == part) {
+        displayRandomBuildPart(part);
+        foundType.insert(part.type);
         return;
     }
-    else if (foundType.find(partType.toStdString()) != foundType.end())
+    else if (foundType.find(part.type) != foundType.end())
         return;
 
-    QString filename = partName;
+    QString filename = QString::fromStdString(part.name);
+    QString partType = QString::fromStdString(part.type);
+
+    // CLEAN UP IMG FILENAME AND DISPLAY CORRECT IMAGE
     filename.replace(QRegExp("[\\\\/:*?\"<>|]"), "_");  // Replace invalid filename characters with "_"
+    // Remove content in parentheses
+    int startIdx = filename.indexOf('(');
+    int endIdx = filename.indexOf(')');
+    if(startIdx != -1 && endIdx != -1 && startIdx < endIdx) {
+        filename.remove(startIdx, endIdx - startIdx + 1);
+    }
     filename += ".jpg";  // Append file extension
 
     QString fullImagePath = QDir(mainWindow->buildPath).filePath(partType + "/" + filename);
@@ -523,7 +532,7 @@ void InitDialog::displayPart(const QString& partType, const QString& partName)
     }
 }
 
-void InitDialog::displayRandomBuild() {
+void InitDialog::displayRandomBuildPage() {
     nextButton->hide();
     QWidget* randomBuildWidget = new QWidget(this);
     QVBoxLayout* mainLayout = new QVBoxLayout(randomBuildWidget);
@@ -541,11 +550,11 @@ void InitDialog::displayRandomBuild() {
         QVBoxLayout* partLayout = new QVBoxLayout(partWidget);
 
         // Create a label for the image
-        QLabel* imageLabel = new QLabel();
+        QLabel* imageLabel = new QLabel(this); // 'this' assumes it's inside a QWidget derived class, adjust accordingly
         imageLabel->setPixmap(placeholder.scaled(256, 256, Qt::KeepAspectRatio));
         partLayout->addWidget(imageLabel);
 
-        // Add the QLabel pointer to the map
+        // Map the QLabel pointer based on the part type
         if (partType == "MOBO")
             partImageLabels["motherboard"] = imageLabel;
         else if (partType == "FAN")
@@ -596,10 +605,19 @@ void InitDialog::displayRandomBuild() {
     stackedWidget->setCurrentWidget(randomBuildWidget);
 }
 
-void InitDialog::displayRandomBuildPart(const QString& partType, const PCPart& part)
+void InitDialog::displayRandomBuildPart(const PCPart& part)
 {
     QString filename = QString::fromStdString(part.name);
+    QString partType = QString::fromStdString(part.type);
+
+    // CLEAN UP IMG FILENAME AND DISPLAY
     filename.replace(QRegExp("[\\\\/:*?\"<>|]"), "_");  // Replace invalid filename characters with "_"
+    // Remove content in parentheses
+    int startIdx = filename.indexOf('(');
+    int endIdx = filename.indexOf(')');
+    if(startIdx != -1 && endIdx != -1 && startIdx < endIdx) {
+        filename.remove(startIdx, endIdx - startIdx + 1);
+    }
     filename += ".jpg";  // Append file extension
 
     QString fullImagePath = QDir(mainWindow->buildPath).filePath(partType + "/" + filename);
@@ -707,22 +725,20 @@ void InitDialog::displayRandomBuildPart(const QString& partType, const PCPart& p
     }
 }
 
-void InitDialog::handleImageSavedSuccessfully(const QString& partType, const QString& partName)
+void InitDialog::handleImageSavedSuccessfully(const PCPart& part)
 {
-    displayPart(partType, partName);
-
-    partsQueue.enqueue(QPair<QString, QString>(partType, partName));
+    partsQueue.enqueue(&part);
 
     if (!displayTimer.isActive()) {  // Only start timer if not already active
-        displayTimer.start(0);  // 2-second delay
+        displayTimer.start(1000);  // 2-second delay
     }
 }
 
 void InitDialog::displayNextPart()
 {
     if (!partsQueue.isEmpty()) {
-        QPair<QString, QString> part = partsQueue.dequeue();
-        displayPart(part.first, part.second);
+        const PCPart* partPtr = partsQueue.dequeue();
+        displayPart(*partPtr);
     } else {
         displayTimer.stop();  // Stop the timer if no more parts to display
     }

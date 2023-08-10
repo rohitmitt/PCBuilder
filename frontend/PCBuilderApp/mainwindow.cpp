@@ -56,20 +56,20 @@ void MainWindow::on_generatePC_clicked()
 
     randomBuild = newGraph.generateRandomBuild(currentBuild);
 
-//    emit startingImageDownload();
+    emit startingImageDownload();
 
     // Introduce async function that calls downloadImages() while displayRandomBuild() is running
     downloadImages(currentBuild);
 }
 
-void MainWindow::downloadPartImage(const QString& imageUrl, const QString& destinationPath, const QString& partType, const QString& partName)
+void MainWindow::downloadPartImage(const PCPart& part, const QString& destinationPath)
 {
     QNetworkAccessManager* nam = new QNetworkAccessManager(this);
     QNetworkRequest request;
-    request.setUrl(QUrl(imageUrl));
+    request.setUrl(QUrl(QString::fromStdString(part.image)));
 
     QNetworkReply* reply = nam->get(request);
-    connect(reply, &QNetworkReply::finished, this, [reply, destinationPath, partType, partName, this]() {
+    connect(reply, &QNetworkReply::finished, this, [reply, destinationPath, part, this]() {
         if(reply->error() == QNetworkReply::NoError) {
             QByteArray jpegData = reply->readAll();
             QPixmap pixmap;
@@ -78,7 +78,11 @@ void MainWindow::downloadPartImage(const QString& imageUrl, const QString& desti
             QDir().mkpath(QFileInfo(destinationPath).path()); // Create directory if it doesn't exist
 
             if(pixmap.save(destinationPath, "JPG")) {
-                emit imageSavedSuccessfully(partType, partName);
+                imageDownloadCounter++;
+                if (imageDownloadCounter >= 10) {
+                    emit imageSavedSuccessfully(part);
+                    imageDownloadCounter = 0;
+                }
             }
 
             else
@@ -104,23 +108,28 @@ void MainWindow::downloadImages(const unordered_map<string, vector<PCPart>>& bui
 //            else {
             QString filename = QString::fromStdString(part.name);
             filename.replace(QRegExp("[\\\\/:*?\"<>|]"), "_");  // Replace invalid filename characters with "_"
+            // Remove content in parentheses
+            int startIdx = filename.indexOf('(');
+            int endIdx = filename.indexOf(')');
+            if(startIdx != -1 && endIdx != -1 && startIdx < endIdx) {
+                filename.remove(startIdx, endIdx - startIdx + 1);
+            }
             filename += ".jpg";  // Append file extension
 
             QString fullDestinationPath = QDir(buildPath).filePath(QString::fromStdString(part.type) + "/" + filename);
-            downloadPartImage(QString::fromStdString(part.image), fullDestinationPath, QString::fromStdString(part.type), QString::fromStdString(part.name));
+            downloadPartImage(part, fullDestinationPath);
 //            count++;
 //            }
         }
     }
 }
 
-#include <QDir>
 
 // Function to initialize directories
 void MainWindow::initializeDirectories()
 {
     // Generate the build path
-    buildPath = QString("C:/Users/RohitPC/Desktop/Coding/PCBuilder/frontend/PCBuilderApp/assets/CompleteBuilds/BUILD_%1").arg(QDateTime::currentDateTime().toString("dd.MM.yyyy_hh.mm.ssAP"));
+    buildPath = QString("C:/Users/RohitPC/Desktop/CompleteBuilds/BUILD_%1").arg(QDateTime::currentDateTime().toString("dd.MM.yyyy_hh.mm.ssAP"));
 
     // Create the build directory
     if (!QDir().mkpath(buildPath)) {
@@ -133,14 +142,4 @@ void MainWindow::initializeDirectories()
     for(const auto& partName : partNames) {
         QDir().mkpath(buildPath + "/" + partName);
     }
-}
-
-QString MainWindow::getLastDownloadedPartType() const {
-    qDebug() << "getLastDownloadedPartType:" << lastDownloadedPartType;
-    return lastDownloadedPartType;
-}
-
-QString MainWindow::getLastDownloadedPartName() const {
-    qDebug() << "getLastDownloadedPartType:" << lastDownloadedPartType;
-    return lastDownloadedPartName;
 }
